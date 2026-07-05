@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Urb. Palma Verde - Consulta de Aportes</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- CSS Library -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <style>
+    /* ============================================================ */
+    /* PALMA VERDE VECINOS — DESIGN SYSTEM                         */
+    /* ============================================================ */
+    :root {
+      --cs-dark: #082126;
+      --cs-indigo: #082126;
+      --cs-indigo-light: #0D3B40;
+      --cs-indigo-vivid: #115959;
+      --cs-indigo-soft: rgba(17, 89, 89, 0.08);
+      --cs-teal: #115959;
+      --cs-teal-light: #1F7354;
+      --cs-teal-soft: rgba(31, 115, 84, 0.08);
+      --cs-amber: #D97706;
+      --cs-amber-soft: rgba(245, 158, 11, 0.08);
+      --cs-red: #DC2626;
+      --cs-red-soft: #FEF2F2;
+      --surface: #F2F1F0;
+      --surface-raised: #FFFFFF;
+      --surface-glass: rgba(255, 255, 255, 0.72);
+      --border: rgba(8, 33, 38, 0.10);
+      --border-active: rgba(8, 33, 38, 0.25);
+      --text-primary: #082126;
+      --text-secondary: #334A4D;
+      --text-muted: #6B7C80;
+      --text-inverse: #FFFFFF;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --shadow-sm: 0 1px 3px rgba(8,33,38,.06);
+      --shadow-md: 0 4px 16px rgba(8,33,38,.08);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { overflow-x: hidden; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--surface);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        radial-gradient(ellipse at 20% 0%, rgba(17,89,89,.05) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 100%, rgba(31,115,84,.04) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-active); border-radius: 3px; }
+
+    /* ==================== LOADING SPINNER ==================== */
+    .spinner-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(242,241,240,.85); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10000; transition: opacity .3s;
+    }
+    .spinner-overlay.hidden { opacity: 0; pointer-events: none; }
+    .cs-spinner {
+      width: 56px; height: 56px; border-radius: 50%;
+      border: 4px solid var(--cs-indigo-soft);
+      border-top-color: var(--cs-indigo); border-right-color: var(--cs-teal);
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ==================== APP LAYOUT ==================== */
+    .app-layout { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+    /* ---- SIDEBAR ---- */
+    .sidebar {
+      width: 250px;
+      background: var(--surface-glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-right: 1px solid var(--border);
+      padding: 20px 14px;
+      position: fixed; top: 0; left: 0; height: 100vh;
+      overflow-y: auto; z-index: 50;
+      display: flex; flex-direction: column;
+    }
+    .sidebar-brand {
+      display: flex; align-items: center; gap: 10px;
+      padding: 4px 10px 24px; text-decoration: none;
+    }
+    .sidebar-brand-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--cs-indigo), var(--cs-teal-light));
+      color: #fff; font-size: 1.1rem; flex-shrink: 0;
+    }
+    .sidebar-brand-text {
+      font-weight: 900; font-size: 1.05rem;
+      letter-spacing: -.5px; color: var(--cs-indigo); line-height: 1.1;
+    }
+    .sidebar-brand-text small {
+      font-size: .6rem; font-weight: 600; color: var(--text-muted);
+      letter-spacing: .5px; text-transform: uppercase;
+      display: block; margin-top: 2px;
+    }
+    .sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .sidebar-nav a {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; border-radius: var(--radius-sm);
+      color: var(--text-secondary); text-decoration: none;
+      font-size: .9rem; font-weight: 500;
+      transition: all .2s; position: relative;
+    }
+    .sidebar-nav a:hover { background: rgba(17,89,89,.06); color: var(--cs-indigo-light); }
+    .sidebar-nav a.active {
+      background: linear-gradient(135deg, rgba(17,89,89,.14), rgba(17,89,89,.04));
+      color: var(--cs-indigo-light); font-weight: 700;
+    }
+    .sidebar-nav a.active::before {
+      content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      width: 4px; height: 50%;
+      background: linear-gradient(180deg, var(--cs-indigo-vivid), var(--cs-teal-light));
+      border-radius: 0 4px 4px 0;
+    }
+    .sidebar-nav a i { font-size: 1.2rem; width: 20px; text-align: center; }
+
+    /* ---- MAIN CONTENT ---- */
+    .main-content { margin-left: 250px; padding: 28px 36px; flex: 1; max-width: 1280px; }
+
+    /* ---- TOP NAV (mobile) ---- */
+    .top-nav {
+      display: none; align-items: center;
+      padding: 12px 18px; margin-bottom: 20px;
+      background: var(--surface-glass); border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+    }
+    .top-nav-brand { font-weight: 900; font-size: 1.05rem; color: var(--cs-indigo); display:flex; align-items:center; gap:8px; }
+
+    /* ---- BOTTOM NAV (mobile) ---- */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--surface-glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      display: flex; z-index: 100;
+      padding: 6px 0 env(safe-area-inset-bottom, 6px);
+    }
+    .bottom-nav a {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      padding: 4px 2px; color: var(--text-muted);
+      font-size: .6rem; text-decoration: none;
+      gap: 2px; font-weight: 500; transition: color .2s;
+    }
+    .bottom-nav a i { font-size: 1.15rem; }
+    .bottom-nav a.active { color: var(--cs-indigo-light); font-weight: 700; }
+
+    /* ---- BREAKPOINTS ---- */
+    @media (max-width: 991px) {
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; padding: 16px 14px 90px; max-width: 100%; }
+      .top-nav { display: flex !important; }
+    }
+    @media (min-width: 992px) { .bottom-nav { display: none !important; } }
+
+    /* ---- VIEW TRANSITIONS ---- */
+    .view-page { display: none; animation: fadeIn .3s ease-out; }
+    .view-page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ==================== CARDS ==================== */
+    .glass-card {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow .25s;
+    }
+    .glass-card:hover { box-shadow: var(--shadow-md); }
+
+    /* ==================== SEARCH ==================== */
+    .search-container { position: relative; max-width: 580px; margin: 0 auto; }
+    .search-input {
+      width: 100%; background: var(--surface-raised);
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 13px 20px 13px 44px;
+      color: var(--text-primary); font-size: .95rem;
+      transition: all .25s; font-family: inherit; outline: none;
+    }
+    .search-input:focus { border-color: var(--cs-teal); box-shadow: 0 0 0 3px rgba(17,89,89,.12); }
+    .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+    .search-clear { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; display: none; }
+    .search-clear:hover { color: var(--text-primary); }
+    .search-dropdown {
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: var(--surface-raised); border: 1px solid var(--border);
+      border-radius: 12px; margin-top: 6px; max-height: 260px;
+      overflow-y: auto; z-index: 1000;
+      box-shadow: 0 12px 40px rgba(8,33,38,.12); display: none;
+    }
+    .search-dropdown.open { display: block; }
+    .dropdown-option { padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border); transition: background .2s; }
+    .dropdown-option:last-child { border-bottom: none; }
+    .dropdown-option:hover { background: rgba(17,89,89,.07); }
+    .dropdown-code { color: var(--cs-teal); font-weight: 700; margin-right: 6px; }
+
+    /* ==================== TABLES ==================== */
+    .cs-table-wrap {
+      border-radius: 12px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--border);
+    }
+    .cs-table { width: 100%; min-width: 580px; margin: 0; border-collapse: collapse; background: var(--surface-raised); font-size: .87rem; }
+    .cs-table th {
+      background: #F9FAFB; color: var(--text-secondary); font-weight: 600;
+      padding: 11px 14px; text-align: left; font-size: .76rem;
+      text-transform: uppercase; letter-spacing: .5px;
+      border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    .cs-table td { padding: 13px 14px; border-bottom: 1px solid var(--border); color: var(--text-primary); }
+    .cs-table tr:last-child td { border-bottom: none; }
+    .cs-table tr:hover td { background: rgba(17,89,89,.02); }
+    .table-responsive-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    /* ==================== BADGES ==================== */
+    .badge-pill { display:inline-flex; align-items:center; padding:4px 10px; border-radius:100px; font-size:.72rem; font-weight:600; gap:5px; }
+    .badge-ok { background: rgba(31,115,84,.08); color: #1F7354; border: 1px solid rgba(31,115,84,.2); }
+    .badge-warn { background: #FEF2F2; color: #DC2626; border: 1px solid rgba(220,38,38,.2); }
+    .badge-neutral { background: rgba(8,33,38,.05); color: var(--text-muted); border: 1px solid rgba(8,33,38,.1); }
+
+    /* ==================== TIMELINE ==================== */
+    .timeline-item { display:flex; gap:15px; margin-bottom:14px; position:relative; }
+    .timeline-item::after { content:''; position:absolute; left:7px; top:20px; bottom:-20px; width:2px; background:var(--border); z-index:1; }
+    .timeline-item:last-child::after { display:none; }
+    .timeline-marker { width:16px; height:16px; border-radius:50%; background:var(--surface); border:3px solid var(--border); z-index:2; flex-shrink:0; margin-top:3px; }
+    .timeline-marker.paid { background:var(--cs-teal-light); border-color:var(--cs-teal-light); box-shadow:0 0 6px rgba(31,115,84,.4); }
+    .timeline-marker.pending { background:var(--cs-red); border-color:var(--cs-red); box-shadow:0 0 6px rgba(220,38,38,.4); }
+    .timeline-marker.future { background:var(--text-muted); border-color:var(--text-muted); }
+    .timeline-content {
+      background:#F9FAFB; border:1px solid var(--border); border-radius:10px;
+      padding:10px 14px; flex-grow:1; display:flex;
+      justify-content:space-between; align-items:center; font-size:.84rem;
+    }
+
+    /* ==================== MATRIX ==================== */
+    .matrix-container { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+    .matrix-table { font-size:.72rem; white-space:nowrap; }
+    .matrix-table th { text-align:center; vertical-align:middle; padding:10px 8px; }
+    .matrix-table th:first-child, .matrix-table td:first-child { text-align:left; position:sticky; left:0; background:var(--surface-raised); z-index:5; border-right:1px solid var(--border); }
+    .matrix-table td { text-align:center; padding:8px 6px; vertical-align:middle; }
+    .matrix-cell-badge { display:inline-block; padding:3px 6px; border-radius:4px; font-weight:600; font-size:.68rem; }
+    .matrix-cell-paid { background:rgba(31,115,84,.08); color:#1F7354; border:1px solid rgba(31,115,84,.2); }
+    .matrix-cell-pending { background:#FEF2F2; color:#DC2626; border:1px solid rgba(220,38,38,.2); }
+    .matrix-cell-future { background:rgba(8,33,38,.03); color:var(--text-muted); border:1px solid rgba(8,33,38,.06); }
+    .matrix-table tr.total-row td { background:#E5E7EB !important; color:var(--text-primary) !important; font-weight:700; border-top:2px solid var(--cs-teal) !important; border-bottom:2px solid var(--cs-teal) !important; font-size:.76rem; }
+    .matrix-table tr.total-row td.grand-total { color:#1F7354 !important; font-size:.8rem; }
+
+    /* ==================== STATS GRID ==================== */
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(130px,1fr)); gap:12px; }
+    .stat-card { padding:14px; text-align:center; }
+    .stat-val { font-size:1.2rem; font-weight:700; margin-top:4px; }
+
+    /* ==================== FORMS ==================== */
+    .form-control, .form-select { border-radius: var(--radius-sm) !important; border: 1.5px solid var(--border) !important; font-size:.88rem; background-color: var(--surface-raised); font-family: inherit; }
+    .form-control:focus, .form-select:focus { border-color: var(--cs-indigo-vivid) !important; box-shadow: 0 0 0 3px rgba(17,89,89,.08) !important; outline: none; }
+
+    /* ==================== PHOTO GALLERY / EVIDENCE ==================== */
+    .photo-gallery-grid { display:grid; gap:8px; margin-top:8px; }
+    .photo-gallery-item { position:relative; aspect-ratio:1; border-radius:6px; overflow:hidden; border:1px solid var(--border); cursor:pointer; transition:transform .2s; }
+    .photo-gallery-item:hover { transform:scale(1.05); }
+    .photo-gallery-item img { width:100%; height:100%; object-fit:cover; }
+
+    /* ==================== LIGHTBOX ==================== */
+    .lightbox { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(8,33,38,.92); z-index:10000; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .3s; }
+    .lightbox.visible { opacity:1; pointer-events:auto; }
+    .lightbox img { max-width:90%; max-height:90%; border-radius:8px; box-shadow:0 10px 40px rgba(0,0,0,.5); }
+    .lightbox-close { position:absolute; top:20px; right:20px; color:#fff; font-size:2.5rem; cursor:pointer; transition:transform .2s; }
+    .lightbox-close:hover { transform:scale(1.1); }
+
+    /* ==================== TOAST ==================== */
+    .toast-container { position:fixed; bottom:80px; right:18px; z-index:1050; }
+    @media (min-width:992px) { .toast-container { bottom:24px; } }
+    .custom-toast {
+      background:var(--surface-raised); border:1px solid var(--border); border-left:4px solid var(--cs-teal);
+      color:var(--text-primary); min-width:260px;
+      box-shadow:0 10px 30px rgba(8,33,38,.15); border-radius:8px;
+      padding:12px 16px; display:flex; align-items:center; gap:12px;
+      transform:translateY(100px); opacity:0;
+      transition:all .3s cubic-bezier(.175,.885,.32,1.275);
+    }
+    .custom-toast.show { transform:translateY(0); opacity:1; }
+
+    /* ==================== SECTION TITLES ==================== */
+    .section-title { font-weight:800; font-size:1.3rem; margin-bottom:.25rem; display:flex; align-items:center; gap:10px; color:var(--text-primary); }
+    .section-sub { color:var(--text-muted); font-size:.84rem; margin-bottom:1.5rem; }
+  </style>
+</head>
+<body>
+
+
+  <!-- Loading Spinner -->
+  <div class="spinner-overlay" id="app-spinner">
+    <div class="cs-spinner"></div>
+  </div>
+
+  <!-- App Layout -->
+  <div class="app-layout" id="app-content" style="display:none;">
+
+    <!-- ===== DESKTOP SIDEBAR ===== -->
+    <aside class="sidebar">
+      <a href="#" class="sidebar-brand" onclick="return false;">
+        <img src="" alt="Logo" class="app-logo" style="width:38px;height:38px;border-radius:10px;object-fit:cover;background:white;padding:2px;flex-shrink:0;">
+        <div class="sidebar-brand-text">
+          Palma Verde
+          <small>Portal de Vecinos</small>
+        </div>
+      </a>
+
+      <nav class="sidebar-nav">
+        <a href="#" class="active" id="snav-individual" onclick="switchTab('individual');return false;">
+          <i class="bi bi-search"></i> Consulta
+        </a>
+        <a href="#" id="snav-general" onclick="switchTab('general');return false;">
+          <i class="bi bi-grid-3x3-gap"></i> Transparencia
+        </a>
+        <a href="#" id="snav-calle" onclick="switchTab('calle');return false;">
+          <i class="bi bi-geo-alt-fill"></i> Resumen por Calle
+        </a>
+        <a href="#" id="snav-graficos" onclick="switchTab('graficos');return false;">
+          <i class="bi bi-pie-chart-fill"></i> Resumen Gráfico
+        </a>
+        <a href="#" id="snav-gastos" onclick="switchTab('gastos');return false;">
+          <i class="bi bi-cash-coin"></i> Gastos
+        </a>
+      </nav>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="main-content">
+
+      <!-- Mobile Top Bar -->
+      <div class="top-nav">
+        <div class="top-nav-brand">
+          <img src="" alt="Logo" class="app-logo" style="width:30px;height:30px;border-radius:6px;object-fit:cover;background:white;padding:2px;margin-right:6px;flex-shrink:0;">
+          <span>Palma Verde</span>
+        </div>
+      </div>
+
+      <!-- VIEW 1: INDIVIDUAL QUERY -->
+      <div id="view-individual" class="view-page active">
+        <div class="section-title"><i class="bi bi-person-search"></i> Mi Estado</div>
+        <div class="section-sub">Busca por tu nombre, apellido o código de vecino.</div>
+
+        <!-- Search Bar -->
+        <div class="search-container mb-4">
+          <i class="bi bi-search search-icon"></i>
+          <input type="text" class="search-input" id="neighborSearch" placeholder="Busca tu nombre, apellido o código..." autocomplete="off">
+          <button class="search-clear" id="searchClear" onclick="clearSearch()"><i class="bi bi-x-lg"></i></button>
+          <div class="search-dropdown" id="searchDropdown"></div>
+        </div>
+
+        <!-- Result Container -->
+        <div id="query-result" style="display: none;">
+          <div class="row g-4">
+            <!-- Neighbor Card -->
+            <div class="col-12 col-md-5">
+              <div class="glass-card p-4 mb-4">
+                <div class="d-flex align-items-center gap-3 mb-3 pb-3" style="border-bottom:1px solid var(--border);">
+                  <div class="d-flex align-items-center justify-content-center rounded-circle text-white fw-bold" id="neighborInitials" style="width:50px;height:50px;background:var(--cs-teal);font-size:1.2rem;flex-shrink:0;"></div>
+                  <div>
+                    <h3 class="h5 mb-0" id="neighborName">---</h3>
+                    <span class="small text-muted">Vecino Registrado</span>
+                  </div>
+                </div>
+                <table class="w-100" style="font-size:.85rem;">
+                  <tr style="height:32px;"><td class="text-muted">Código:</td><td class="fw-semibold text-end" id="neighborCode">---</td></tr>
+                  <tr style="height:32px;"><td class="text-muted">Dirección:</td><td class="fw-semibold text-end" id="neighborAddress">---</td></tr>
+                  <tr style="height:32px;"><td class="text-muted">Ingreso:</td><td class="fw-semibold text-end" id="neighborJoinDate">---</td></tr>
+                  <tr style="height:32px;"><td class="text-muted">Estado:</td><td class="text-end" id="neighborStatus">---</td></tr>
+                </table>
+              </div>
+              <!-- Stats summary -->
+              <div class="glass-card p-4">
+                <h4 class="h6 mb-3 text-muted"><i class="bi bi-pie-chart-fill me-1"></i>Resumen General</h4>
+                <div class="stats-grid">
+                  <div class="glass-card stat-card">
+                    <span class="small text-muted">Aportado</span>
+                    <div class="stat-val text-success" id="statPaid">Bs 0</div>
+                  </div>
+                  <div class="glass-card stat-card">
+                    <span class="small text-muted">Pendientes</span>
+                    <div class="stat-val text-warning" id="statPending">0 mes(es)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Contribution Details Timeline -->
+            <div class="col-12 col-md-7">
+              <div class="glass-card p-4">
+                <h3 class="h5 mb-3"><i class="bi bi-clock-history me-1"></i>Historial Detallado de Aportes</h3>
+                <div id="contributionsTimeline"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="query-empty" class="text-center py-5 text-muted">
+          <i class="bi bi-search" style="font-size:2.5rem;opacity:.3;"></i>
+          <p class="mt-3">Ingrese su nombre o código para consultar su estado de aportaciones.</p>
+        </div>
+      </div>
+
+      <!-- VIEW 2: GENERAL TRANSPARENCY MATRIX -->
+      <div id="view-general" class="view-page">
+        <div class="section-title"><i class="bi bi-grid-3x3-gap"></i> Transparencia</div>
+        <div class="section-sub">Matriz general de aportes correspondientes a la gestión seleccionada</div>
+
+        <div class="glass-card p-4 mb-4">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+            <div>
+              <h2 class="h5 mb-0"><i class="bi bi-grid-3x3-gap me-2"></i>Matriz de Transparencia de Aportes</h2>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="small text-muted fw-semibold">Gestión:</span>
+              <select class="form-select form-select-sm" id="matrixGestionSelect" onchange="renderMatrixReport()" style="width:auto;"></select>
+            </div>
+          </div>
+
+          <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+            <div class="position-relative" style="max-width:400px;width:100%;">
+              <i class="bi bi-search position-absolute text-muted" style="left:12px;top:50%;transform:translateY(-50%);font-size:.8rem;"></i>
+              <input type="text" class="form-control form-control-sm ps-5" id="matrixSearch" placeholder="Filtrar matriz por vecino..." onkeyup="filterMatrixTable(this.value)" style="background:#fff;">
+            </div>
+            <div class="d-flex flex-wrap gap-3 text-muted" style="font-size:.75rem;">
+              <span class="d-flex align-items-center gap-1"><span class="matrix-cell-badge matrix-cell-paid" style="padding:2px 5px;"><i class="bi bi-check-lg"></i></span> Al día</span>
+              <span class="d-flex align-items-center gap-1"><span class="matrix-cell-badge matrix-cell-pending" style="padding:2px 5px;"><i class="bi bi-exclamation-triangle"></i></span> Mora</span>
+              <span class="d-flex align-items-center gap-1"><span class="matrix-cell-badge matrix-cell-future" style="padding:2px 5px;">-</span> Futuro</span>
+            </div>
+          </div>
+
+          <div class="matrix-container cs-table-wrap">
+            <table class="cs-table matrix-table" id="tbl-transparency-matrix">
+              <thead><!-- Populated dynamically --></thead>
+              <tbody><!-- Populated dynamically --></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 3: RESUMEN POR CALLE -->
+      <div id="view-calle" class="view-page">
+        <div class="section-title"><i class="bi bi-geo-alt-fill"></i> Resumen por Calle</div>
+        <div class="section-sub">Consolidado de aportaciones agrupado por calle</div>
+
+        <div class="glass-card p-3 mb-3 d-flex flex-wrap gap-3">
+          <div class="d-flex align-items-center gap-2">
+            <span class="small fw-semibold">Gestión:</span>
+            <select class="form-select form-select-sm" id="calle-gestion-filter" style="width:110px" onchange="renderReporteCalle()"><option value="">Todas</option></select>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="small fw-semibold">Mes:</span>
+            <select class="form-select form-select-sm" id="calle-mes-filter" style="width:140px" onchange="renderReporteCalle()">
+              <option value="">Todos</option>
+              <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+              <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+              <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+              <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="glass-card p-4">
+          <div class="table-responsive-wrap cs-table-wrap">
+            <table class="cs-table" id="tbl-reporte-calle-parent">
+              <thead>
+                <tr>
+                  <th>Calle</th><th>Total Vecinos</th><th>Aportado (Ingresos)</th>
+                  <th>Adeudado (Mora)</th><th>Vecinos al Día</th><th>Vecinos en Mora</th><th>% Cumplimiento</th>
+                </tr>
+              </thead>
+              <tbody id="tbl-reporte-calle"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 4: RESUMEN GRAFICO -->
+      <div id="view-graficos" class="view-page">
+        <div class="section-title"><i class="bi bi-pie-chart-fill"></i> Resumen Gráfico</div>
+        <div class="section-sub">Visualización gráfica de los aportes y mora</div>
+
+        <div class="glass-card p-3 mb-3 d-flex flex-wrap gap-3">
+          <div class="d-flex align-items-center gap-2">
+            <span class="small fw-semibold">Gestión:</span>
+            <select class="form-select form-select-sm" id="graficos-gestion-filter" style="width:110px" onchange="renderReporteGraficos()"><option value="">Todas</option></select>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="small fw-semibold">Mes:</span>
+            <select class="form-select form-select-sm" id="graficos-mes-filter" style="width:140px" onchange="renderReporteGraficos()">
+              <option value="">Todos</option>
+              <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+              <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+              <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+              <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-12 col-md-5">
+            <div class="glass-card p-4">
+              <h3 class="h5 mb-3"><i class="bi bi-pie-chart-fill me-1"></i>Aportado vs Adeudado General</h3>
+              <div style="position:relative;height:280px;"><canvas id="chartGraficoPie"></canvas></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-7">
+            <div class="glass-card p-4">
+              <h3 class="h5 mb-3"><i class="bi bi-bar-chart-steps me-1"></i>Aportes y Adeudos por Calle</h3>
+              <div style="position:relative;height:280px;width:100%"><canvas id="chartGraficoBar"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 5: GASTOS -->
+      <div id="view-gastos" class="view-page">
+        <div class="section-title"><i class="bi bi-cash-coin"></i> Reporte de Gastos</div>
+        <div class="section-sub">Transparencia de los gastos realizados en la urbanización</div>
+
+        <div class="glass-card p-4">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+            <span class="text-muted" style="font-size:.82rem;">Gastos registrados y sus comprobantes</span>
+            <div class="position-relative" style="max-width:300px;width:100%;">
+              <i class="bi bi-search position-absolute text-muted" style="left:12px;top:50%;transform:translateY(-50%);font-size:.8rem;"></i>
+              <input type="text" class="form-control form-control-sm ps-5" id="gastoSearch" placeholder="Buscar gasto..." onkeyup="filterGastoTable(this.value)" style="background:#fff;">
+            </div>
+          </div>
+          <div class="cs-table-wrap">
+            <table class="cs-table" id="tbl-gastos-parent">
+              <thead>
+                <tr>
+                  <th>N° Gasto</th><th>Fecha</th><th>Descripción / Observación</th><th>Monto</th><th>Evidencia</th>
+                </tr>
+              </thead>
+              <tbody id="tbl-gastos"><!-- Populated dynamically --></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end .main-content -->
+  </div><!-- end .app-layout -->
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+    <span class="lightbox-close">&times;</span>
+    <img id="lightboxImg" src="">
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-container">
+    <div id="toast" class="custom-toast">
+      <i class="bi bi-info-circle" id="toastIcon"></i>
+      <span id="toastMsg">Notificación</span>
+    </div>
+  </div>
+
+  <!-- MOBILE BOTTOM NAV -->
+  <nav class="bottom-nav" id="bottomNav">
+    <a href="#" class="active" id="bnav-individual" onclick="switchTab('individual');return false;">
+      <i class="bi bi-person-search"></i><span>Mi Estado</span>
+    </a>
+    <a href="#" id="bnav-general" onclick="switchTab('general');return false;">
+      <i class="bi bi-grid-3x3-gap"></i><span>Transparencia</span>
+    </a>
+    <a href="#" id="bnav-calle" onclick="switchTab('calle');return false;">
+      <i class="bi bi-geo-alt-fill"></i><span>Por Calle</span>
+    </a>
+    <a href="#" id="bnav-graficos" onclick="switchTab('graficos');return false;">
+      <i class="bi bi-pie-chart-fill"></i><span>Gráfico</span>
+    </a>
+    <a href="#" id="bnav-gastos" onclick="switchTab('gastos');return false;">
+      <i class="bi bi-cash-coin"></i><span>Gastos</span>
+    </a>
+  </nav>
+
+  <!-- JavaScript Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // ==================== GLOBAL CONFIGURATION ====================
+    const API_URL = "https://script.google.com/macros/s/AKfycbxRrr9Q2ryRESiZIr2lYrwq--X3XbAzVK9haKAagWUwq0tWfx1jww3ZpToI9vXTH0R0/exec";
+    const LOGO_URL = "https://drive.google.com/uc?export=view&id=1CPSRZMUz9vB7X9ebcDhkU0qjAoViAlP5";
+
+    const MESES_NOMBRE = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const MESES_CORTO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+    let APP = {
+      personas: [],
+      conceptosAporte: [],
+      gestiones: [],
+      periodos: [],
+      transacciones: [],
+      transaccionDetalle: [],
+      transaccionArchivos: [],
+      gastos: [],
+      gastoArchivos: []
+    };
+
+    let selectedNeighbor = null;
+
+    // ==================== APP INITIALIZATION ====================
+    window.addEventListener('DOMContentLoaded', async () => {
+      updateAppBrandingLogos();
+      await loadAppState();
+      initSearchableSelect();
+    });
+
+    function getCleanLogoUrl(url) {
+      if (!url) return '';
+      if (url.includes('drive.google.com') || url.includes('googleusercontent.com') || url.includes('docs.google.com')) {
+        let id = '';
+        const idMatch = url.match(/[?&]id=([^&#]+)/);
+        if (idMatch) {
+          id = idMatch[1];
+        } else {
+          const dMatch = url.match(/\/d\/([^/]+)/);
+          if (dMatch) id = dMatch[1];
+        }
+        if (id) {
+          return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
+        }
+      }
+      return url;
+    }
+
+    function updateAppBrandingLogos() {
+      const logo = getCleanLogoUrl(LOGO_URL);
+      if (logo) {
+        document.querySelectorAll('.app-logo').forEach(img => {
+          img.src = logo;
+        });
+      }
+    }
+
+    async function loadAppState() {
+      showSpinner(true);
+      try {
+        const response = await fetch(API_URL + "?action=getAppState");
+        const result = await response.json();
+        if (result.success && result.data) {
+          APP = { ...APP, ...result.data };
+          populateGestionesSelect();
+          renderMatrixReport();
+          populateReporteCalleFilters();
+          renderReporteCalle();
+          renderReporteGraficos();
+          renderGastos();
+          showSpinner(false);
+          document.getElementById('app-content').style.display = 'flex';
+        } else {
+          showToast('Error al conectar con la base de datos', 'error');
+        }
+      } catch (e) {
+        showToast('Error de red al conectar con Google Sheets', 'error');
+        console.error(e);
+      }
+    }
+
+    function showSpinner(show) {
+      const el = document.getElementById('app-spinner');
+      if (show) { el.classList.remove('hidden'); }
+      else { el.classList.add('hidden'); }
+    }
+
+    // ==================== TABS SWAP ====================
+    function switchTab(tabName) {
+      // Update sidebar nav
+      ['individual','general','calle','graficos','gastos'].forEach(t => {
+        const sn = document.getElementById('snav-' + t);
+        const bn = document.getElementById('bnav-' + t);
+        if (sn) sn.classList.toggle('active', t === tabName);
+        if (bn) bn.classList.toggle('active', t === tabName);
+      });
+
+      // Show/hide view pages
+      document.querySelectorAll('.view-page').forEach(el => el.classList.remove('active'));
+      const target = document.getElementById('view-' + tabName);
+      if (target) target.classList.add('active');
+
+      if (tabName === 'graficos') renderReporteGraficos();
+      if (tabName === 'calle') renderReporteCalle();
+      if (tabName === 'gastos') renderGastos();
+    }
+
+    // ==================== SEARCH / QUERY LOGIC ====================
+    function initSearchableSelect() {
+      const input = document.getElementById('neighborSearch');
+      const dropdown = document.getElementById('searchDropdown');
+      const clearBtn = document.getElementById('searchClear');
+
+      input.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        if (query) {
+          clearBtn.style.display = 'block';
+          const list = APP.personas.filter(p => p.activo !== 'false' && (
+            (p.nombre && p.nombre.toLowerCase().includes(query)) ||
+            (p.apellido && p.apellido.toLowerCase().includes(query)) ||
+            (p.nro_correlativo && p.nro_correlativo.toLowerCase().includes(query)) ||
+            (p.telefono && p.telefono.toLowerCase().includes(query))
+          ));
+          
+          if (list.length > 0) {
+            dropdown.innerHTML = list.map(p => `
+              <div class="dropdown-option" data-id="${p.id}">
+                <span class="dropdown-code">[${p.nro_correlativo || '---'}]</span>
+                <span>${(p.nombre + ' ' + (p.apellido || '')).trim()}</span>
+              </div>
+            `).join('');
+            dropdown.classList.add('open');
+          } else {
+            dropdown.innerHTML = '<div class="p-3 text-center text-muted small">No se encontraron vecinos</div>';
+            dropdown.classList.add('open');
+          }
+        } else {
+          clearBtn.style.display = 'none';
+          dropdown.classList.remove('open');
+        }
+      });
+
+      // Handle selection
+      dropdown.addEventListener('mousedown', (e) => {
+        const option = e.target.closest('.dropdown-option');
+        if (option) {
+          const id = option.dataset.id;
+          const persona = APP.personas.find(p => p.id.toString() === id.toString());
+          if (persona) {
+            selectNeighbor(persona);
+          }
+          dropdown.classList.remove('open');
+        }
+      });
+
+      input.addEventListener('blur', () => {
+        setTimeout(() => dropdown.classList.remove('open'), 200);
+      });
+    }
+
+    function clearSearch() {
+      document.getElementById('neighborSearch').value = '';
+      document.getElementById('searchClear').style.display = 'none';
+      document.getElementById('searchDropdown').classList.remove('open');
+      document.getElementById('query-result').style.display = 'none';
+      document.getElementById('query-empty').style.display = 'block';
+      selectedNeighbor = null;
+    }
+
+    function selectNeighbor(persona) {
+      selectedNeighbor = persona;
+      document.getElementById('neighborSearch').value = (persona.nombre + ' ' + (persona.apellido || '')).trim();
+      document.getElementById('query-empty').style.display = 'none';
+      document.getElementById('query-result').style.display = 'block';
+
+      // Profile details
+      const fullName = (persona.nombre + ' ' + (persona.apellido || '')).trim();
+      document.getElementById('neighborInitials').textContent = initials(fullName);
+      document.getElementById('neighborName').textContent = fullName;
+      document.getElementById('neighborCode').textContent = persona.nro_correlativo || '---';
+      document.getElementById('neighborAddress').textContent = (persona.calle || '') + (persona.numero ? ' N° ' + persona.numero : '');
+      document.getElementById('neighborJoinDate').textContent = formatDateForDisplay(persona.fecha_ingreso);
+      
+      const statusBadge = persona.activo !== 'false'
+        ? '<span class="badge-pill badge-ok"><i class="bi bi-check-circle-fill"></i>Activo</span>'
+        : '<span class="badge-pill badge-neutral">Inactivo</span>';
+      document.getElementById('neighborStatus').innerHTML = statusBadge;
+
+      // Render contributions & statistics
+      renderIndividualContributions(persona);
+    }
+
+    function renderIndividualContributions(persona) {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+      const ymIngreso = getYearMonth(persona.fecha_ingreso);
+
+      let expectedMonths = 0;
+      if (ymIngreso) {
+        for (let y = ymIngreso.year; y <= currentYear; y++) {
+          const mStart = y === ymIngreso.year ? ymIngreso.month : 1;
+          const mEnd = y === currentYear ? currentMonth : 12;
+          expectedMonths += Math.max(0, mEnd - mStart + 1);
+        }
+      }
+
+      // Get payments
+      const paidSet = new Set();
+      const txsVecino = APP.transacciones.filter(t => safeStringCompare(t.persona_id, persona.id));
+      
+      let totalPaidAmount = 0;
+      txsVecino.forEach(t => {
+        const dets = APP.transaccionDetalle.filter(d => safeStringCompare(d.transaccion_id, t.id));
+        dets.forEach(d => {
+          totalPaidAmount += parseFloat(d.monto || 0);
+          const perObj = APP.periodos.find(pe => safeStringCompare(pe.id, d.periodo_id));
+          const gestObj = APP.gestiones.find(g => safeStringCompare(g.id, d.gestion_id));
+          if (perObj && gestObj) {
+            paidSet.add(gestObj.gestion + '-' + parseInt(perObj.mes));
+          }
+        });
+      });
+
+      const pagados = paidSet.size;
+      const pendingMonths = Math.max(0, expectedMonths - pagados);
+
+      document.getElementById('statPaid').textContent = formatMoney(totalPaidAmount);
+      document.getElementById('statPending').textContent = `${pendingMonths} mes(es)`;
+
+      // Timeline of months grouped by concept
+      const timelineContainer = document.getElementById('contributionsTimeline');
+      timelineContainer.innerHTML = '';
+
+      if (APP.conceptosAporte.length === 0) {
+        timelineContainer.innerHTML = '<p class="text-muted small">No hay conceptos de aporte cargados en el sistema.</p>';
+        return;
+      }
+
+      const activeConcept = APP.conceptosAporte.filter(c => c.activo !== 'false') || APP.conceptosAporte;
+
+      activeConcept.forEach(c => {
+        const conceptBlock = document.createElement('div');
+        conceptBlock.className = 'mb-4';
+        conceptBlock.innerHTML = `<h4 class="concept-title">${c.descripcion}</h4>`;
+        
+        const timelineList = document.createElement('div');
+        timelineList.className = 'ps-2';
+
+        // Display recent 12 periods or all periods of the current gestion
+        // For simplicity and transparency, list all months of the current year + past year
+        const curYr = now.getFullYear();
+        const startYr = ymIngreso ? Math.max(ymIngreso.year, curYr - 1) : curYr - 1;
+
+        const periods = [];
+        for (let y = curYr; y >= startYr; y--) {
+          const mStart = (ymIngreso && y === ymIngreso.year) ? ymIngreso.month : 1;
+          const mEnd = 12;
+          for (let m = 12; m >= mStart; m--) {
+            // Limit timeline to future periods up to currentYear + 1
+            if (y > curYr + 1) continue;
+            periods.push({ year: y, month: m });
+          }
+        }
+
+        if (periods.length === 0) {
+          timelineList.innerHTML = '<p class="text-muted small">No hay periodos de aporte correspondientes.</p>';
+        } else {
+          timelineList.innerHTML = periods.map(p => {
+            const isPaid = paidSet.has(p.year + '-' + p.month);
+            const isFuture = (p.year > currentYear) || (p.year === currentYear && p.month > currentMonth);
+            
+            let statusMarker = 'future';
+            let statusText = 'No exigible';
+            let badgeClass = 'badge-neutral';
+            
+            if (isPaid) {
+              statusMarker = 'paid';
+              statusText = 'Pagado';
+              badgeClass = 'badge-ok';
+            } else if (!isFuture) {
+              statusMarker = 'pending';
+              statusText = 'Pendiente';
+              badgeClass = 'badge-warn';
+            }
+
+            return `
+              <div class="timeline-item">
+                <div class="timeline-marker ${statusMarker}"></div>
+                <div class="timeline-content">
+                  <div class="fw-semibold">${MESES_NOMBRE[p.month - 1]} ${p.year}</div>
+                  <span class="badge-pill ${badgeClass}">${statusText}</span>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        conceptBlock.appendChild(timelineList);
+        timelineContainer.appendChild(conceptBlock);
+      });
+    }
+
+    // ==================== TRANSPARENCY MATRIX LOGIC ====================
+    function populateGestionesSelect() {
+      const select = document.getElementById('matrixGestionSelect');
+      if (!select) return;
+      
+      const currentYear = new Date().getFullYear();
+      let hasCurrentYear = false;
+
+      const options = APP.gestiones.map(g => {
+        if (parseInt(g.gestion) === currentYear) hasCurrentYear = true;
+        return `<option value="${g.gestion}">${g.gestion}</option>`;
+      });
+
+      if (!hasCurrentYear) {
+        options.unshift(`<option value="${currentYear}">${currentYear}</option>`);
+      }
+
+      select.innerHTML = options.join('');
+      select.value = currentYear;
+    }
+
+    function renderMatrixReport() {
+      const select = document.getElementById('matrixGestionSelect');
+      const table = document.getElementById('tbl-transparency-matrix');
+      if (!select || !table) return;
+
+      const selectedYear = parseInt(select.value);
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+
+      // 1. Generate Headers (Neighbor Name, Ene, Feb, ..., Dic, Total Paid)
+      let headHtml = '<tr><th>Vecino / Código</th>';
+      for (let m = 0; m < 12; m++) {
+        headHtml += `<th class="text-center">${MESES_CORTO[m]}</th>`;
+      }
+      headHtml += '<th class="text-center">Total Aportado</th></tr>';
+      table.querySelector('thead').innerHTML = headHtml;
+
+      // 2. Compute cells for each neighbor
+      const rowTotals = {}; // neighborId -> total
+      const colTotals = Array(12).fill(0); // index 0-11 -> sum
+      
+      const rowsHtml = APP.personas.map(p => {
+        const fullName = (p.nombre + ' ' + (p.apellido || '')).trim();
+        const code = p.nro_correlativo || '---';
+        const ymIngreso = getYearMonth(p.fecha_ingreso);
+        
+        let rowHtml = `<tr class="matrix-row" data-search="${(fullName + ' ' + code).toLowerCase()}">`;
+        rowHtml += `<td><div class="fw-semibold">${fullName}</div><div class="small text-muted" style="font-size:0.68rem">Código: ${code}</div></td>`;
+        
+        // Find contributions for this year
+        const personTxs = APP.transacciones.filter(t => safeStringCompare(t.persona_id, p.id));
+        const txIds = personTxs.map(t => t.id);
+        const personDets = APP.transaccionDetalle.filter(d => txIds.some(id => safeStringCompare(d.transaccion_id, id)));
+
+        let rowSum = 0;
+
+        for (let m = 1; m <= 12; m++) {
+          // Find period id
+          const gestObj = APP.gestiones.find(g => safeStringCompare(g.gestion, selectedYear));
+          const perObj = gestObj ? APP.periodos.find(pe => safeStringCompare(pe.gestion_id, gestObj.id) && parseInt(pe.mes) === m) : null;
+          
+          let cellHtml = '';
+          const isFuture = (selectedYear > currentYear) || (selectedYear === currentYear && m > currentMonth);
+          const isBeforeIngreso = ymIngreso && ((selectedYear < ymIngreso.year) || (selectedYear === ymIngreso.year && m < ymIngreso.month));
+
+          if (isBeforeIngreso) {
+            cellHtml = '<span class="matrix-cell-none">-</span>';
+          } else {
+            let amountPaid = 0;
+            if (perObj) {
+              amountPaid = personDets.filter(d => safeStringCompare(d.periodo_id, perObj.id)).reduce((s, d) => s + parseFloat(d.monto || 0), 0);
+            }
+
+            if (amountPaid > 0) {
+              cellHtml = `<span class="matrix-cell-badge matrix-cell-paid">Bs${amountPaid}</span>`;
+              rowSum += amountPaid;
+              colTotals[m - 1] += amountPaid;
+            } else if (isFuture) {
+              cellHtml = '<span class="matrix-cell-badge matrix-cell-future">-</span>';
+            } else {
+              cellHtml = '<span class="matrix-cell-badge matrix-cell-pending"><i class="bi bi-exclamation-triangle"></i></span>';
+            }
+          }
+
+          rowHtml += `<td>${cellHtml}</td>`;
+        }
+
+        rowHtml += `<td class="text-center fw-bold" style="color: var(--cs-teal); font-size: 0.78rem;">${formatMoney(rowSum)}</td>`;
+        rowHtml += '</tr>';
+        
+        return rowHtml;
+      });
+
+      // 3. Add column total summary row
+      let totalRowHtml = '<tr class="fw-bold total-row">';
+      totalRowHtml += '<td>Total Recaudado por Mes</td>';
+      
+      let grandTotal = 0;
+      for (let m = 0; m < 12; m++) {
+        totalRowHtml += `<td class="text-center">${formatMoney(colTotals[m])}</td>`;
+        grandTotal += colTotals[m];
+      }
+      
+      totalRowHtml += `<td class="text-center grand-total">${formatMoney(grandTotal)}</td>`;
+      totalRowHtml += '</tr>';
+
+      table.querySelector('tbody').innerHTML = rowsHtml.join('') + totalRowHtml;
+    }
+
+    function filterMatrixTable(query) {
+      const q = (query || '').toLowerCase().trim();
+      const rows = document.querySelectorAll('#tbl-transparency-matrix tbody .matrix-row');
+      rows.forEach(row => {
+        const searchVal = row.dataset.search || '';
+        if (searchVal.includes(q)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    // ==================== HELPERS ====================
+    function initials(name) {
+      if (!name) return 'U';
+      const parts = name.split(' ').filter(x => x.trim() !== '');
+      if (parts.length === 0) return 'U';
+      let init = parts[0].substring(0, 1).toUpperCase();
+      if (parts.length > 1) {
+        init += parts[1].substring(0, 1).toUpperCase();
+      }
+      return init;
+    }
+
+    function getCleanLogoUrl(url) {
+      if (!url) return '';
+      if (url.includes('drive.google.com') || url.includes('googleusercontent.com') || url.includes('docs.google.com')) {
+        let id = '';
+        const idMatch = url.match(/[?&]id=([^&#]+)/);
+        if (idMatch) {
+          id = idMatch[1];
+        } else {
+          const dMatch = url.match(/\/d\/([^/]+)/);
+          if (dMatch) id = dMatch[1];
+        }
+        if (id) {
+          return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
+        }
+      }
+      return url;
+    }
+
+    function updateAppBrandingLogos() {
+      const logo = getCleanLogoUrl(LOGO_URL);
+      if (logo) {
+        document.querySelectorAll('.app-logo').forEach(img => {
+          img.src = logo;
+        });
+      }
+    }
+
+    function formatMoney(amount) {
+      const num = parseFloat(amount) || 0;
+      return 'Bs ' + num.toLocaleString('es-BO', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+
+    function safeStringCompare(val1, val2) {
+      if (val1 === undefined || val1 === null || val1 === '') return false;
+      if (val2 === undefined || val2 === null || val2 === '') return false;
+      return val1.toString().trim() === val2.toString().trim();
+    }
+
+    function getYearMonth(dateStr) {
+      if (!dateStr) return null;
+      try {
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) {
+          return { year: d.getFullYear(), month: d.getMonth() + 1 };
+        }
+      } catch (e) {}
+      
+      const m = dateStr.toString().match(/^(\d{4})-(\d{2})/);
+      if (m) {
+        return { year: parseInt(m[1]), month: parseInt(m[2]) };
+      }
+      return null;
+    }
+
+    function getConceptoName(conceptoId) {
+      const c = APP.conceptosAporte.find(x => x.id === conceptoId);
+      return c ? c.descripcion : 'Sin concepto';
+    }
+
+    function formatDateForDisplay(dateStr) {
+      if (!dateStr) return '';
+      if (typeof dateStr !== 'string') {
+        try {
+          const d = new Date(dateStr);
+          if (!isNaN(d.getTime())) {
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${year}-${month}-${day}`;
+          }
+        } catch(e) {}
+        return '';
+      }
+      
+      const cleanStr = dateStr.replace(/\s*\(.*\)\s*/g, '').trim();
+      
+      if (cleanStr.includes('GMT') || cleanStr.includes('hora de')) {
+        try {
+          const d = new Date(cleanStr);
+          if (!isNaN(d.getTime())) {
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${year}-${month}-${day}`;
+          }
+        } catch(e) {}
+      }
+      if (cleanStr.includes('T')) {
+        return cleanStr.split('T')[0];
+      }
+      if (/^\d{4}-\d{2}-\d{2}$/.test(cleanStr)) return cleanStr;
+      
+      const parts = cleanStr.split(/[-/]/);
+      if (parts.length === 3) {
+        if (parts[0].length === 4) {
+          return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+        }
+        if (parts[2].length === 4) {
+          return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        }
+      }
+      
+      try {
+        const d = new Date(cleanStr);
+        if (!isNaN(d.getTime())) {
+          const day = String(d.getDate()).padStart(2, '0');
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const year = d.getFullYear();
+          return `${year}-${month}-${day}`;
+        }
+      } catch(e) {}
+      return dateStr;
+    }
+
+    // ==================== TOAST MESSAGES ====================
+    let toastTimeout;
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      const icon = document.getElementById('toastIcon');
+      const msgEl = document.getElementById('toastMsg');
+      
+      msgEl.textContent = msg;
+      
+      if (type === 'success') {
+        toast.style.borderLeftColor = 'var(--cs-green)';
+        icon.className = 'bi bi-check-circle-fill text-success';
+      } else {
+        toast.style.borderLeftColor = 'var(--cs-red)';
+        icon.className = 'bi bi-exclamation-triangle-fill text-danger';
+      }
+
+      toast.classList.add('show');
+
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3500);
+    }
+
+    // Chart instances
+    let chartGraficoPie = null;
+    let chartGraficoBar = null;
+
+    // Lightbox functions
+    function openLightbox(src) {
+      document.getElementById('lightboxImg').src = src;
+      document.getElementById('lightbox').classList.add('visible');
+    }
+    function closeLightbox(e) {
+      if (e) e.stopPropagation();
+      document.getElementById('lightbox').classList.remove('visible');
+    }
+
+    // Gastos rendering & filtering
+    function renderGastos() {
+      const tbody = document.getElementById('tbl-gastos');
+      if (!tbody) return;
+      if (APP.gastos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No hay gastos registrados</td></tr>';
+        return;
+      }
+      const sorted = [...APP.gastos].sort((a, b) => {
+        const dateA = formatDateForDisplay(a.fecha);
+        const dateB = formatDateForDisplay(b.fecha);
+        if (dateA !== dateB) return dateB.localeCompare(dateA);
+        const numA = parseInt(a.numero_gasto) || 0;
+        const numB = parseInt(b.numero_gasto) || 0;
+        return numB - numA;
+      });
+      tbody.innerHTML = sorted.map(g => {
+        const archivos = APP.gastoArchivos.filter(a => a.gasto_id === g.id);
+        const photos = archivos.map(a =>
+          `<div class="photo-gallery-item" onclick="event.stopPropagation();openLightbox('${a.archivo}')"><img src="${a.archivo}"></div>`
+        ).join('');
+        return `<tr>
+          <td class="fw-semibold">${g.numero_gasto || ''}</td>
+          <td>${formatDateForDisplay(g.fecha)}</td>
+          <td>${g.descripcion || ''}<br><span style="font-size:.72rem;color:var(--text-muted)">${g.observacion || ''}</span></td>
+          <td class="fw-bold" style="color:var(--cs-amber)">${formatMoney(g.monto_total)}</td>
+          <td><div class="photo-gallery-grid" style="grid-template-columns:repeat(auto-fill,minmax(60px,1fr));max-width:160px">${photos}</div></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function filterGastoTable(query) {
+      const q = (query || '').toLowerCase().trim();
+      const rows = document.querySelectorAll('#tbl-gastos tr');
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        if (text.includes(q)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    // Calle & Graficos Report rendering
+    function renderReporteCalle() {
+      const tbody = document.getElementById('tbl-reporte-calle');
+      if (!tbody) return;
+
+      const selectedGest = document.getElementById('calle-gestion-filter')?.value || '';
+      const selectedMes = document.getElementById('calle-mes-filter')?.value || '';
+
+      const streets = {};
+
+      APP.personas.forEach(p => {
+        const calleName = (p.calle || '').trim() || 'Sin Calle/General';
+        if (!streets[calleName]) {
+          streets[calleName] = {
+            nombre: calleName,
+            totalVecinos: 0,
+            vecinosAlDia: 0,
+            vecinosEnMora: 0,
+            totalAportado: 0,
+            totalAdeudado: 0
+          };
+        }
+      });
+
+      if (Object.keys(streets).length === 0) {
+        streets['Sin Calle/General'] = {
+          nombre: 'Sin Calle/General',
+          totalVecinos: 0,
+          vecinosAlDia: 0,
+          vecinosEnMora: 0,
+          totalAportado: 0,
+          totalAdeudado: 0
+        };
+      }
+
+      const activosConceptos = APP.conceptosAporte.filter(c => c.activo !== 'false');
+      const avgMonto = activosConceptos.length > 0
+        ? activosConceptos.reduce((s, c) => s + parseFloat(c.monto_mensual || 0), 0) / activosConceptos.length
+        : 50;
+
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+
+      APP.personas.forEach(p => {
+        const ymIngreso = getYearMonth(p.fecha_ingreso);
+        if (!ymIngreso) return;
+
+        if (selectedGest) {
+          const g = parseInt(selectedGest);
+          if (selectedMes) {
+            const m = parseInt(selectedMes);
+            if (ymIngreso.year > g || (ymIngreso.year === g && ymIngreso.month > m)) {
+              return;
+            }
+          } else {
+            if (ymIngreso.year > g) {
+              return;
+            }
+          }
+        }
+
+        const calleName = (p.calle || '').trim() || 'Sin Calle/General';
+        if (!streets[calleName]) return;
+
+        streets[calleName].totalVecinos++;
+
+        let startY = ymIngreso.year;
+        let startM = ymIngreso.month;
+        let endY = currentYear;
+        let endM = currentMonth;
+
+        if (selectedGest) {
+          const g = parseInt(selectedGest);
+          if (selectedMes) {
+            const m = parseInt(selectedMes);
+            startY = Math.max(startY, g);
+            startM = startY === g ? Math.max(startM, m) : m;
+            endY = g;
+            endM = m;
+          } else {
+            startY = Math.max(startY, g);
+            startM = startY === g ? startM : 1;
+            endY = g;
+            endM = g === currentYear ? currentMonth : 12;
+          }
+        }
+
+        let expected = 0;
+        if (startY < endY || (startY === endY && startM <= endM)) {
+          for (let y = startY; y <= endY; y++) {
+            const mStart = y === startY ? startM : 1;
+            const mEnd = y === endY ? endM : 12;
+            expected += Math.max(0, mEnd - mStart + 1);
+          }
+        }
+
+        let paidCount = 0;
+        const paidSet = new Set();
+        const personaTx = APP.transacciones.filter(t => safeStringCompare(t.persona_id, p.id));
+        personaTx.forEach(t => {
+          const dets = APP.transaccionDetalle.filter(d => safeStringCompare(d.transaccion_id, t.id));
+          dets.forEach(d => {
+            const perObj = APP.periodos.find(pe => safeStringCompare(pe.id, d.periodo_id));
+            const gestObj = APP.gestiones.find(g => safeStringCompare(g.id, d.gestion_id));
+            if (perObj && gestObj) {
+              const txYear = parseInt(gestObj.gestion);
+              const txMonth = parseInt(perObj.mes);
+
+              let match = false;
+              if (selectedGest) {
+                const g = parseInt(selectedGest);
+                if (selectedMes) {
+                  const m = parseInt(selectedMes);
+                  match = (txYear === g && txMonth === m);
+                } else {
+                  match = (txYear === g);
+                }
+              } else {
+                match = true;
+              }
+
+              if (match) {
+                paidSet.add(txYear + '-' + txMonth);
+              }
+            }
+          });
+        });
+        paidCount = paidSet.size;
+
+        const unpaid = Math.max(0, expected - paidCount);
+        const debt = unpaid * avgMonto;
+
+        if (p.activo !== 'false') {
+          if (debt > 0) {
+            streets[calleName].vecinosEnMora++;
+            streets[calleName].totalAdeudado += debt;
+          } else {
+            streets[calleName].vecinosAlDia++;
+          }
+        }
+      });
+
+      APP.personas.forEach(p => {
+        if (p.activo === 'false') {
+          const calleName = (p.calle || '').trim() || 'Sin Calle/General';
+          if (streets[calleName]) {
+            streets[calleName].totalVecinos++;
+          }
+        }
+      });
+
+      APP.transacciones.forEach(t => {
+        const p = APP.personas.find(x => safeStringCompare(x.id, t.persona_id));
+        const calleName = p ? (p.calle || '').trim() : '';
+        const streetKey = calleName || 'Sin Calle/General';
+
+        if (streets[streetKey]) {
+          const dets = APP.transaccionDetalle.filter(d => safeStringCompare(d.transaccion_id, t.id));
+          dets.forEach(d => {
+            const perObj = APP.periodos.find(pe => safeStringCompare(pe.id, d.periodo_id));
+            const gestObj = APP.gestiones.find(g => safeStringCompare(g.id, d.gestion_id));
+            if (perObj && gestObj) {
+              const txYear = parseInt(gestObj.gestion);
+              const txMonth = parseInt(perObj.mes);
+
+              let match = false;
+              if (selectedGest) {
+                const g = parseInt(selectedGest);
+                if (selectedMes) {
+                  const m = parseInt(selectedMes);
+                  match = (txYear === g && txMonth === m);
+                } else {
+                  match = (txYear === g);
+                }
+              } else {
+                match = true;
+              }
+
+              if (match) {
+                streets[streetKey].totalAportado += parseFloat(d.monto || 0);
+              }
+            }
+          });
+        }
+      });
+
+      const sortedStreets = Object.values(streets).sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+      tbody.innerHTML = sortedStreets.map(s => {
+        const total = s.totalAportado + s.totalAdeudado;
+        const compliance = total > 0 ? ((s.totalAportado / total) * 100).toFixed(1) : '100.0';
+        return `<tr>
+          <td class="fw-semibold">${s.nombre}</td>
+          <td>${s.totalVecinos}</td>
+          <td class="fw-bold" style="color:var(--cs-teal)">${formatMoney(s.totalAportado)}</td>
+          <td class="fw-bold" style="color:var(--cs-red)">${formatMoney(s.totalAdeudado)}</td>
+          <td><span class="badge-pill badge-ok">${s.vecinosAlDia} vecinos</span></td>
+          <td><span class="badge-pill ${s.vecinosEnMora > 0 ? 'badge-warn' : 'badge-neutral'}">${s.vecinosEnMora} vecinos</span></td>
+          <td class="fw-bold">${compliance}%</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function renderReporteGraficos() {
+      const canvasPie = document.getElementById('chartGraficoPie');
+      const canvasBar = document.getElementById('chartGraficoBar');
+      if (!canvasPie || !canvasBar) return;
+
+      const selectedGest = document.getElementById('graficos-gestion-filter')?.value || '';
+      const selectedMes = document.getElementById('graficos-mes-filter')?.value || '';
+
+      const streets = {};
+
+      APP.personas.forEach(p => {
+        const calleName = (p.calle || '').trim() || 'Sin Calle/General';
+        if (!streets[calleName]) {
+          streets[calleName] = {
+            nombre: calleName,
+            totalAportado: 0,
+            totalAdeudado: 0
+          };
+        }
+      });
+
+      if (Object.keys(streets).length === 0) {
+        streets['Sin Calle/General'] = {
+          nombre: 'Sin Calle/General',
+          totalAportado: 0,
+          totalAdeudado: 0
+        };
+      }
+
+      const activosConceptos = APP.conceptosAporte.filter(c => c.activo !== 'false');
+      const avgMonto = activosConceptos.length > 0
+        ? activosConceptos.reduce((s, c) => s + parseFloat(c.monto_mensual || 0), 0) / activosConceptos.length
+        : 50;
+
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+
+      APP.personas.forEach(p => {
+        const ymIngreso = getYearMonth(p.fecha_ingreso);
+        if (!ymIngreso) return;
+
+        if (selectedGest) {
+          const g = parseInt(selectedGest);
+          if (selectedMes) {
+            const m = parseInt(selectedMes);
+            if (ymIngreso.year > g || (ymIngreso.year === g && ymIngreso.month > m)) {
+              return;
+            }
+          } else {
+            if (ymIngreso.year > g) {
+              return;
+            }
+          }
+        }
+
+        const calleName = (p.calle || '').trim() || 'Sin Calle/General';
+        if (!streets[calleName]) return;
+
+        let startY = ymIngreso.year;
+        let startM = ymIngreso.month;
+        let endY = currentYear;
+        let endM = currentMonth;
+
+        if (selectedGest) {
+          const g = parseInt(selectedGest);
+          if (selectedMes) {
+            const m = parseInt(selectedMes);
+            startY = Math.max(startY, g);
+            startM = startY === g ? Math.max(startM, m) : m;
+            endY = g;
+            endM = m;
+          } else {
+            startY = Math.max(startY, g);
+            startM = startY === g ? startM : 1;
+            endY = g;
+            endM = g === currentYear ? currentMonth : 12;
+          }
+        }
+
+        let expected = 0;
+        if (startY < endY || (startY === endY && startM <= endM)) {
+          for (let y = startY; y <= endY; y++) {
+            const mStart = y === startY ? startM : 1;
+            const mEnd = y === endY ? endM : 12;
+            expected += Math.max(0, mEnd - mStart + 1);
+          }
+        }
+
+        let paidCount = 0;
+        const paidSet = new Set();
+        const personaTx = APP.transacciones.filter(t => safeStringCompare(t.persona_id, p.id));
+        personaTx.forEach(t => {
+          const dets = APP.transaccionDetalle.filter(d => safeStringCompare(d.transaccion_id, t.id));
+          dets.forEach(d => {
+            const perObj = APP.periodos.find(pe => safeStringCompare(pe.id, d.periodo_id));
+            const gestObj = APP.gestiones.find(g => safeStringCompare(g.id, d.gestion_id));
+            if (perObj && gestObj) {
+              const txYear = parseInt(gestObj.gestion);
+              const txMonth = parseInt(perObj.mes);
+
+              let match = false;
+              if (selectedGest) {
+                const g = parseInt(selectedGest);
+                if (selectedMes) {
+                  const m = parseInt(selectedMes);
+                  match = (txYear === g && txMonth === m);
+                } else {
+                  match = (txYear === g);
+                }
+              } else {
+                match = true;
+              }
+
+              if (match) {
+                paidSet.add(txYear + '-' + txMonth);
+              }
+            }
+          });
+        });
+        paidCount = paidSet.size;
+
+        const unpaid = Math.max(0, expected - paidCount);
+        const debt = unpaid * avgMonto;
+
+        if (p.activo !== 'false' && debt > 0) {
+          streets[calleName].totalAdeudado += debt;
+        }
+      });
+
+      APP.transacciones.forEach(t => {
+        const p = APP.personas.find(x => safeStringCompare(x.id, t.persona_id));
+        const calleName = p ? (p.calle || '').trim() : '';
+        const streetKey = calleName || 'Sin Calle/General';
+
+        if (streets[streetKey]) {
+          const dets = APP.transaccionDetalle.filter(d => safeStringCompare(d.transaccion_id, t.id));
+          dets.forEach(d => {
+            const perObj = APP.periodos.find(pe => safeStringCompare(pe.id, d.periodo_id));
+            const gestObj = APP.gestiones.find(g => safeStringCompare(g.id, d.gestion_id));
+            if (perObj && gestObj) {
+              const txYear = parseInt(gestObj.gestion);
+              const txMonth = parseInt(perObj.mes);
+
+              let match = false;
+              if (selectedGest) {
+                const g = parseInt(selectedGest);
+                if (selectedMes) {
+                  const m = parseInt(selectedMes);
+                  match = (txYear === g && txMonth === m);
+                } else {
+                  match = (txYear === g);
+                }
+              } else {
+                match = true;
+              }
+
+              if (match) {
+                streets[streetKey].totalAportado += parseFloat(d.monto || 0);
+              }
+            }
+          });
+        }
+      });
+
+      let grandAportado = 0;
+      let grandAdeudado = 0;
+      const sortedStreets = Object.values(streets).sort((a, b) => a.nombre.localeCompare(b.nombre));
+      const streetLabels = [];
+      const streetAportadoData = [];
+      const streetAdeudadoData = [];
+
+      sortedStreets.forEach(s => {
+        grandAportado += s.totalAportado;
+        grandAdeudado += s.totalAdeudado;
+        streetLabels.push(s.nombre);
+        streetAportadoData.push(s.totalAportado);
+        streetAdeudadoData.push(s.totalAdeudado);
+      });
+
+      if (chartGraficoPie) chartGraficoPie.destroy();
+      chartGraficoPie = new Chart(canvasPie, {
+        type: 'pie',
+        data: {
+          labels: ['Aportado (Ingresos)', 'Adeudado (Mora)'],
+          datasets: [{
+            data: [grandAportado, grandAdeudado],
+            backgroundColor: ['#115959', '#DC2626'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { boxWidth: 12, font: { family: 'Inter', size: 11 } }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const val = context.raw;
+                  const total = grandAportado + grandAdeudado;
+                  const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0';
+                  return ` ${context.label}: Bs${val.toLocaleString()} (${pct}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      if (chartGraficoBar) chartGraficoBar.destroy();
+      chartGraficoBar = new Chart(canvasBar, {
+        type: 'bar',
+        data: {
+          labels: streetLabels,
+          datasets: [
+            {
+              label: 'Aportado (Ingresos)',
+              data: streetAportadoData,
+              backgroundColor: '#115959',
+              borderWidth: 0
+            },
+            {
+              label: 'Adeudado (Mora)',
+              data: streetAdeudadoData,
+              backgroundColor: '#DC2626',
+              borderWidth: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { font: { family: 'Inter', size: 10 } }
+            },
+            x: {
+              ticks: { font: { family: 'Inter', size: 10 } }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { boxWidth: 12, font: { family: 'Inter', size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    function populateReporteCalleFilters() {
+      ['calle-gestion-filter', 'graficos-gestion-filter'].forEach(id => {
+        const gestSelect = document.getElementById(id);
+        if (!gestSelect) return;
+
+        const prevGest = gestSelect.value;
+        let gestOptions = '<option value="">Todas</option>';
+        const sortedGest = [...APP.gestiones].sort((a, b) => b.gestion.localeCompare(a.gestion));
+        gestOptions += sortedGest.map(g => `<option value="${g.gestion}">${g.gestion}</option>`).join('');
+
+        gestSelect.innerHTML = gestOptions;
+        if (prevGest && gestSelect.querySelector(`option[value="${prevGest}"]`)) {
+          gestSelect.value = prevGest;
+        } else {
+          const curYearStr = new Date().getFullYear().toString();
+          if (gestSelect.querySelector(`option[value="${curYearStr}"]`)) {
+            gestSelect.value = curYearStr;
+          } else {
+            gestSelect.value = '';
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
